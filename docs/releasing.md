@@ -26,19 +26,23 @@ Install the wheel in a new environment and run commands from a directory outside
 
 On 64-bit Windows, the main QGIS user flow is **Set up processing tools > Install tools**. The explicit action downloads pinned, checksum-verified micromamba, creates an isolated conda-forge Python 3.12 environment with the selected dependencies, then installs the bundled source with `pip --no-deps --no-build-isolation`. Raw conversion includes GMT and the reviewed backend; users can instead select the eight raster tools only. Preinstall the build dependencies in the managed environment. Users do not need a separate Python, wheel or raw-backend checkout, and setup does not depend on a public PyPI release. Existing-engine/manual configuration remains an advanced path. Keep source archives available in the public repository so the plugin matches its advertised source.
 
-The Windows64/QGIS 3.40.1 guided path has passed a full fresh online setup in 206.234 seconds, a new raster-only setup using cached packages in 50.640 seconds and its eight-operation workflow in 9.076 seconds. A cold-start real-XTF workflow passed all nine provider operations in 115.922 seconds using saved setup settings, without backend overrides and with the input unchanged. It used a private GMT directory, a Python connection guard, closed proxies and disabled PROJ network access. This was a guarded offline test; native connections outside those controls were outside its boundary, and no operating-system firewall was used. Retain [the online setup record](../logs/guided_online_verification.json), [raster-only record](../logs/guided_core_online_verification.json) and [offline workflow record](../logs/guided_offline_verification.json). These are observed run times rather than installation or performance guarantees.
+The Windows64/QGIS 3.40.1 guided path has passed a full fresh online setup in 206.234 seconds, a new raster-only setup using cached packages in 50.640 seconds and its eight-operation workflow in 9.076 seconds. A cold-start real-XTF workflow passed all nine provider operations in 115.922 seconds using saved setup settings, without backend overrides and with the input unchanged. It used a private GMT directory, a Python connection guard, closed proxies and disabled PROJ network access. This was a guarded offline test; native connections outside those controls were outside its boundary, and no operating-system firewall was used. Retain the online setup record (local: `logs/guided_online_verification.json`), raster-only record (local: `logs/guided_core_online_verification.json`) and offline workflow record (local: `logs/guided_offline_verification.json`). These are observed run times rather than installation or performance guarantees.
+
+The `logs/...` paths identify maintainer-local records, excluded from the public
+repository and distributions; they are not downloadable evidence.
 
 ## Maintainer and publication setup
 
 The maintainer is `BezalelBenUri`; the public contact is
 `diamondinyang@gmail.com`. Package and plugin metadata use that handle.
-The repository name is `seabed-sidescan`, giving the intended URL
-`https://github.com/BezalelBenUri/seabed-sidescan`. The repository did not exist
-when these files were prepared; its URLs are planned destinations, not evidence
-that source has already been published. Create it with default branch `main`,
-enable Issues and make the reviewed source readable before publication. If a
-different repository name is chosen, update both metadata files and the links
-before building again.
+The source is published at
+[BezalelBenUri/seabed-sidescan](https://github.com/BezalelBenUri/seabed-sidescan)
+on the `main` branch. Keep the source, documentation and issue tracker publicly
+readable. Confirm the intended release commit passes
+[GitHub Actions](https://github.com/BezalelBenUri/seabed-sidescan/actions/workflows/ci.yml)
+before publication. Publishing source on GitHub does not upload a package to
+PyPI or submit the plugin to the QGIS directory. If the repository is renamed,
+update both metadata files and the links before building again.
 
 | File produced by this codebase | Purpose |
 | --- | --- |
@@ -55,7 +59,7 @@ The project's own code, including the Python package and QGIS plugin, is license
 Before a public release:
 
 1. Verify the full GPLv3 text in root `LICENSE`, the GPL-3.0-or-later grant and third-party attribution in `NOTICE`, the SPDX expression in `[project].license`, and `license-files = ["LICENSE", "NOTICE"]` in `pyproject.toml`. Check the license and notices are included in the Python artifacts and plugin ZIP and that their metadata agrees.
-2. Confirm the supplied maintainer details and create the planned public repository. Verify the homepage, documentation, source and issue-tracker links in `[project.urls]` and `qgis_plugin/seabed_sidescan_qgis/metadata.txt` actually work. The plugin requires `email`, `license`, `homepage`, `repository`, and `tracker`.
+2. Confirm the supplied maintainer details and keep the public repository readable. Verify the homepage, documentation, source and issue-tracker links in `[project.urls]` and `qgis_plugin/seabed_sidescan_qgis/metadata.txt` actually work. The plugin requires `email`, `license`, `homepage`, `repository`, and `tracker`.
 3. Update package, plugin, and plugin engine version constants together. The builder checks plugin/package consistency; a test checks Python distribution metadata too.
 4. Review the current validation record and remaining software checks in [quality_review.md](quality_review.md). Complete the 0.1.0 confirmation record from actual test logs. The older [distribution_audit.md](distribution_audit.md) records the 0.6.0 baseline. Verify georeferencing calculations, CRS handling, valid outputs, installation, and the formats, platforms, Python versions, and QGIS versions you advertise. Record workload dimensions, runtime, and peak memory using available survey data or a reproducible synthetic workload. The minimum metadata version does not establish testing on every later release.
 5. Run `python tools/build_qgis_plugin.py` without `--development` and inspect the final ZIP. Retain the passing guided online/offline evidence above and repeat the relevant checks if the setup source, runtime specs, bootstrap or installation logic changes. Exercise actual online dependency downloads, source installation, raw-backend and core checks, cancellation/failure handling and local processing with no editable checkout or supplied Python on the engine path. Retain the earlier wheel-install checks as separate evidence and test additional supported platforms before advertising them.

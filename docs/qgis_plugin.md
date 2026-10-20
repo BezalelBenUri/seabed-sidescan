@@ -7,12 +7,15 @@ For QGIS, use the plugin ZIP. The files in `dist` serve different users:
 - The `.whl` file, called a **wheel**, installs the Python analysis package for programmers and researchers using Python.
 - The plugin `.zip` installs the QGIS buttons, forms, and guided setup. It includes the engine and reviewed raw-backend source needed by that setup. QGIS users do not need to select a separate wheel, Python installation, or backend checkout. **Development** means this is a local test build, before publication in the QGIS plugin directory.
 
-Both files are already in `D:\a\seabed_sidescan_solution\dist`; you do not need to download them again. Leave the ZIP compressed and select it directly in QGIS's **Install from ZIP** dialog.
+Build the archives locally using [the release guide](releasing.md); generated
+files in `dist` are not included in a fresh source checkout. QGIS users need only
+the plugin ZIP. Leave it compressed and select it directly in QGIS's **Install
+from ZIP** dialog.
 
 ## Install locally
 
-1. Build the development plugin ZIP using `docs/releasing.md`, or use the locally prepared ZIP in `dist`.
-2. In QGIS, select **Plugins > Manage and Install Plugins > Install from ZIP** and choose `seabed_sidescan_qgis-0.1.0-development.zip`. Enable Seabed Sidescan. This ZIP is for local evaluation while public maintainer/repository details and release validation remain incomplete. The project's own code is licensed under GPL-3.0-or-later.
+1. Build the development plugin ZIP using [the release guide](releasing.md), or use a ZIP already built locally in `dist`.
+2. In QGIS, select **Plugins > Manage and Install Plugins > Install from ZIP** and choose `seabed_sidescan_qgis-0.1.0-development.zip`. Enable Seabed Sidescan. This ZIP is for local evaluation and is not the archive submitted to the QGIS directory. Maintainer metadata is configured and the source is public; directory publication remains a separate step. The project's own code is licensed under GPL-3.0-or-later.
 3. On 64-bit Windows, open **Raster > Seabed Sidescan > Set up processing tools** and click **Install tools**. Keep **Include raw-sonar conversion** selected to process XTF, or clear it if you only need the eight raster tools. Keep an internet connection during setup. The installer downloads Python and the selected processing dependencies, then installs the included source in a separate environment. A separate Python installation or manual backend setup is not required.
 4. Wait for setup and its checks to finish. Setup selects the new tools only after verification and keeps the previous working environment available if an update fails. Installation logs are visible in the setup dialog. Guided automatic setup currently targets 64-bit Windows; existing-engine and manual configuration remain available under the advanced options for other installations.
 5. Open **Raster > Seabed Sidescan > Seabed Sidescan tools**, or search for Seabed Sidescan in the Processing Toolbox.
@@ -37,13 +40,13 @@ Processing runs through a worker process, streams logs into Processing feedback,
 
 The plugin requires QGIS 3.40.1 or later within QGIS 3.x. Windows QGIS 3.40.1 is the tested runtime; other QGIS versions and operating systems need their own validation. QGIS 4 and Qt6 are outside the current compatibility range.
 
-Guided setup and processing passed these additional checks on 64-bit Windows with QGIS 3.40.1:
+Guided setup and processing passed these additional checks on 64-bit Windows with QGIS 3.40.1. Evidence paths identify maintainer-local records, excluded from the public repository; they are not downloads. Public automated test and distribution results are available in [GitHub Actions](https://github.com/BezalelBenUri/seabed-sidescan/actions/workflows/ci.yml).
 
 | Check | Observed result | Evidence |
 | --- | --- | --- |
-| Full online setup including raw conversion | 206.234 seconds, with a new bootstrap and no supplied Python installation | [Online setup record](../logs/guided_online_verification.json) |
-| New raster-only environment | 50.640 seconds using cached dependency packages; all eight raster operations then passed in 9.076 seconds | [Raster-only setup and processing record](../logs/guided_core_online_verification.json) |
-| Cold-start workflow using saved setup settings | All nine provider operations passed with a real XTF input in 115.922 seconds, with no backend path overrides and the input unchanged | [Guarded offline workflow record](../logs/guided_offline_verification.json) |
+| Full online setup including raw conversion | 206.234 seconds, with a new bootstrap and no supplied Python installation | Online setup record (local: `logs/guided_online_verification.json`) |
+| New raster-only environment | 50.640 seconds using cached dependency packages; all eight raster operations then passed in 9.076 seconds | Raster-only setup and processing record (local: `logs/guided_core_online_verification.json`) |
+| Cold-start workflow using saved setup settings | All nine provider operations passed with a real XTF input in 115.922 seconds, with no backend path overrides and the input unchanged | Guarded offline workflow record (local: `logs/guided_offline_verification.json`) |
 
 The final workflow used a private GMT directory, a Python connection guard and closed proxies; it did not use an operating-system firewall. Timings describe these runs on this machine. Existing synthetic checks cover provider registration, output metadata, cancellation, setup failures and installed-package isolation. Earlier real XTF tests separately cover both channel pairs on one survey file. These checks do not establish compatibility with every sonar format, large-survey performance, or sediment classification accuracy. Classes are unsupervised acoustic facies; independent ground truth is needed for sediment labels. Consult the quality review for evidence and remaining limits.
 

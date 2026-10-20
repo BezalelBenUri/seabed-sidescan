@@ -2,8 +2,9 @@
 
 Reviewed on 19 October 2026. The package and QGIS plugin provide side-scan
 processing and acoustic characterization, with numerical reference checks, safer
-output handling, and tested local installation paths. Publication awaits verified
-public metadata and completion of the software checks below. Independent survey
+output handling, and tested local installation paths. Publication requires
+confirmation of account setup, an index installation rehearsal, and completion
+of the software checks below. Independent survey
 positioning control and field sediment observations are outside the scope of
 release 0.1.0 and are documented as limits on interpretation.
 
@@ -14,6 +15,28 @@ The historical results below retain their original version and evidence. Version
 0.1.0 uses the same corrected engine, with version and installation checks
 repeated for the new artifacts. Nothing was published to PyPI or the QGIS plugin
 directory during this review.
+
+Public automated test and distribution results are available in
+[GitHub Actions](https://github.com/BezalelBenUri/seabed-sidescan/actions/workflows/ci.yml).
+The `logs/...` references below identify maintainer-local records excluded from
+the public repository and distributions; they are not downloadable evidence.
+
+## Current automated verification: 20 October 2026
+
+[GitHub Actions run 39414940067](https://github.com/BezalelBenUri/seabed-sidescan/actions/runs/39414940067)
+passed all eight jobs at commit `8cc23f12f8f3bb69eea319786cfac73101fd749f`.
+Windows Python 3.10, 3.12 and 3.13 each passed 214 tests with one POSIX-only skip;
+Linux on those three Python versions each passed 213 tests with two Windows-only
+skips. All six test jobs treated warnings as errors and passed Ruff. Both
+distribution jobs passed strict metadata checks, archive and plugin checks,
+source rebuilds and installed-wheel smoke tests.
+
+A fresh local checkout of that commit also passed the Windows Python 3.13 suite
+with 213 tests and two platform/privilege skips. Its wheel, source distribution
+and both QGIS ZIP variants built successfully; strict metadata, source-rebuild
+and installed-wheel checks passed. These checks do not perform publication or
+establish external account configuration. The historical records below retain
+their original counts and dates.
 
 ## Corrections included
 
@@ -88,14 +111,14 @@ the new artifacts independently of the historical 0.7.0 installation records.
 
 | Surface | Status | Evidence |
 | --- | --- | --- |
-| Windows core, Python 3.13 | **135 passed**, 1 POSIX-only skip; warnings treated as errors | [Test log](../logs/windows_tests_010.log) |
-| Linux core, Python 3.12 | **135 passed**, 1 Windows-only skip; warnings treated as errors | [Test log](../logs/linux_tests_010.log) |
-| Windows core, Python 3.10.11 | **135 passed**, 1 POSIX-only skip; installed wheel, warnings treated as errors and `pip check` passed | [Verification](../logs/quality_py310_010_verification.json) |
-| QGIS 3.40.1 on Windows with the installed wheel | **16/16 passed**; import location and all 17 installed package files verified | [Test log](../logs/quality_qgis_final_010.log) |
-| Windows distribution and installed-wheel checks | **Passed**: archives, licenses, strict metadata, source rebuild and installed-wheel checks | [Verification log](../logs/distribution_verification_010.log) |
-| Linux distribution and installed-wheel checks | **Passed**: archives, licenses, source rebuild and installed-wheel checks | [Verification log](../logs/linux_distribution_verification_010.log) |
+| Windows core, Python 3.13 | **135 passed**, 1 POSIX-only skip; warnings treated as errors | Test log (local: `logs/windows_tests_010.log`) |
+| Linux core, Python 3.12 | **135 passed**, 1 Windows-only skip; warnings treated as errors | Test log (local: `logs/linux_tests_010.log`) |
+| Windows core, Python 3.10.11 | **135 passed**, 1 POSIX-only skip; installed wheel, warnings treated as errors and `pip check` passed | Verification (local: `logs/quality_py310_010_verification.json`) |
+| QGIS 3.40.1 on Windows with the installed wheel | **16/16 passed**; import location and all 17 installed package files verified | Test log (local: `logs/quality_qgis_final_010.log`) |
+| Windows distribution and installed-wheel checks | **Passed**: archives, licenses, strict metadata, source rebuild and installed-wheel checks | Verification log (local: `logs/distribution_verification_010.log`) |
+| Linux distribution and installed-wheel checks | **Passed**: archives, licenses, source rebuild and installed-wheel checks | Verification log (local: `logs/linux_distribution_verification_010.log`) |
 
-A [comparison of both wheels](../logs/version_010_code_equivalence.json)
+A comparison of both wheels (local: `logs/version_010_code_equivalence.json`)
 confirmed that all 17 package files match the audited 0.7.0 engine except for
 the version literal in `__init__.py`. The previous real-data and numerical
 evidence therefore concerns the same processing implementation. The 0.1.0
@@ -110,12 +133,12 @@ QGIS profile was not selected or overwritten.
 
 | Surface | Verified result | Evidence |
 | --- | --- | --- |
-| Windows core, Python 3.13 | **182 passed**, 2 platform/privilege skips; warnings treated as errors | [Test log](../logs/guided_core_tests_windows.log) |
-| Linux core, Python 3.12 | **183 passed**, 1 Windows-only skip; warnings treated as errors | [Test log](../logs/guided_core_tests_linux.log) |
-| QGIS 3.40.1 on Windows | **30/30 passed**, including installer failure, cancellation, settings preservation and registration checks | [Test log](../logs/quality_guided_qgis_full.log) |
-| Full guided online installation | **Passed in 206.234 seconds** into a new environment, including raw-conversion dependencies; no existing Python or prepared scientific dependency folder supplied to setup | [Verification](../logs/guided_online_verification.json) |
-| Raster-only guided installation | **Passed in 50.64 seconds** into a new environment using the managed download cache; previous raw settings retained; all eight raster operations passed afterward | [Verification](../logs/guided_core_online_verification.json) |
-| Real XTF workflow after setup | **All nine provider operations passed in 115.922 seconds** using restored settings and no manual backend paths | [Verification](../logs/guided_offline_verification.json) |
+| Windows core, Python 3.13 | **182 passed**, 2 platform/privilege skips; warnings treated as errors | Test log (local: `logs/guided_core_tests_windows.log`) |
+| Linux core, Python 3.12 | **183 passed**, 1 Windows-only skip; warnings treated as errors | Test log (local: `logs/guided_core_tests_linux.log`) |
+| QGIS 3.40.1 on Windows | **30/30 passed**, including installer failure, cancellation, settings preservation and registration checks | Test log (local: `logs/quality_guided_qgis_full.log`) |
+| Full guided online installation | **Passed in 206.234 seconds** into a new environment, including raw-conversion dependencies; no existing Python or prepared scientific dependency folder supplied to setup | Verification (local: `logs/guided_online_verification.json`) |
+| Raster-only guided installation | **Passed in 50.64 seconds** into a new environment using the managed download cache; previous raw settings retained; all eight raster operations passed afterward | Verification (local: `logs/guided_core_online_verification.json`) |
+| Real XTF workflow after setup | **All nine provider operations passed in 115.922 seconds** using restored settings and no manual backend paths | Verification (local: `logs/guided_offline_verification.json`) |
 
 The final real-data run processed one 229,577,728-byte XTF through conversion,
 mosaicking, masking, textures, stacking, evaluation, classification, cleanup and
@@ -149,7 +172,7 @@ verification. Current fresh-install evidence is Windows 64-bit with QGIS
 3.40.1. Proxy configurations and other QGIS platforms remain unverified.
 
 Artifact digests and final installed-wheel and QGIS verification references are
-recorded in the [final artifact record](../logs/guided_final_artifacts.json).
+recorded in the final artifact record (local: `logs/guided_final_artifacts.json`).
 
 ## Format guards and publication preparation: 20 October 2026
 
@@ -164,26 +187,26 @@ unchanged. The separate backend patch materializer also copies the JSF reader.
 
 | Check | Observed result | Evidence |
 | --- | --- | --- |
-| New regressions against the previous implementation | 27 failures reproduced; 21 cases already passed | [Before log](../logs/raw_format_guards_before.log) |
-| Focused raw backend suite after the guards | **48 passed**, warnings treated as errors | [After log](../logs/raw_format_guards_after.log) |
-| Windows core, Python 3.13 | **212 passed**, 2 expected platform/privilege skips; warnings treated as errors | [Test log](../logs/release_core_tests_windows.log) |
-| Linux core, Python 3.12 | **213 passed**, 1 Windows-only skip; warnings treated as errors | [Test log](../logs/release_core_tests_linux.log) |
-| Real XTF header and complete decoding | Both pairs accepted across all 5,164 pings; `0,1` gives 2,084 samples/channel and `2,3` gives 3,126; source unchanged | [Header](../logs/raw_format_real_header_20261020.json), [decode](../logs/raw_format_real_decode_20261020.json) |
+| New regressions against the previous implementation | 27 failures reproduced; 21 cases already passed | Before log (local: `logs/raw_format_guards_before.log`) |
+| Focused raw backend suite after the guards | **48 passed**, warnings treated as errors | After log (local: `logs/raw_format_guards_after.log`) |
+| Windows core, Python 3.13 | **212 passed**, 2 expected platform/privilege skips; warnings treated as errors | Test log (local: `logs/release_core_tests_windows.log`) |
+| Linux core, Python 3.12 | **213 passed**, 1 Windows-only skip; warnings treated as errors | Test log (local: `logs/release_core_tests_linux.log`) |
+| Real XTF header and complete decoding | Both pairs accepted across all 5,164 pings; `0,1` gives 2,084 samples/channel and `2,3` gives 3,126; source unchanged | Header (local: `logs/raw_format_real_header_20261020.json`), decode (local: `logs/raw_format_real_decode_20261020.json`) |
 
-The [final release-candidate record](../logs/release_final_artifacts.json) records
+The final release-candidate record (local: `logs/release_final_artifacts.json`) records
 the resulting artifact hashes and subsequent installed-wheel, distribution and
 QGIS workflow checks. Earlier artifacts remain under
 `dist/archive/0.1.0-before-format-guards-20261020`; the version is still unpublished
 0.1.0. Synthetic JSF fixtures establish the rejection and alignment checks,
 rather than representative real-file processing. See [formats.md](formats.md)
-for the supported subset and [releasing.md](releasing.md) for the planned public
+for the supported subset and [releasing.md](releasing.md) for the public
 repository and manual publication workflow. Account setup and index rehearsal
 are external publication steps; local checks do not establish their completion.
 
 The documentation refresh on 20 October 2026 updated release instructions and
 repository links without changing executable source. Its rebuilt distributions,
 source comparisons and installation checks are recorded in the
-[distribution refresh record](../logs/docs_cleanup_artifacts.json). The previous
+distribution refresh record (local: `logs/docs_cleanup_artifacts.json`). The previous
 tested distributions are retained under
 `dist/archive/0.1.0-before-docs-cleanup-20261020`.
 
@@ -234,30 +257,30 @@ file's SHA-256, size, and modification time were unchanged after the checks.
 
 Local evidence:
 
-- [Complete CLI verification](../logs/quality_cli_raw/attempt_zrebmypj/verification.json),
-  [current-run output manifest](../logs/quality_cli_raw/attempt_zrebmypj/outputs.json),
-  and [processing log](../logs/quality_cli_raw/attempt_zrebmypj/run.log).
-- [Channel `2,3` verification and source-integrity record](../logs/raw_audit_pair23_20261019_bqkjjaf2/verification.json).
+- Complete CLI verification (local: `logs/quality_cli_raw/attempt_zrebmypj/verification.json`),
+  current-run output manifest (local: `logs/quality_cli_raw/attempt_zrebmypj/outputs.json`),
+  and processing log (local: `logs/quality_cli_raw/attempt_zrebmypj/run.log`).
+- Channel `2,3` verification and source-integrity record (local: `logs/raw_audit_pair23_20261019_bqkjjaf2/verification.json`).
 - [Core regression and reference suites](../tests/) and
   [QGIS integration suite](../qgis_plugin/seabed_sidescan_qgis/tests/test_qgis_smoke.py).
-- [Real-data downstream workflow verification](../logs/real_pipeline_070/verification.json).
-- [Windows test log](../logs/windows_tests.log),
-  [Linux test log](../logs/linux_tests.log), and
-  [final-wheel QGIS test log](../logs/quality_qgis_final_070.log).
-- [Python 3.10 verification](../logs/quality_py310_verification.json) and
-  [strict Python 3.10 test log](../logs/quality_py310_pytest.log).
-- [Windows distribution checks](../logs/distribution_verification.log) and
-  [Linux distribution checks](../logs/linux_distribution_verification.log).
+- Real-data downstream workflow verification (local: `logs/real_pipeline_070/verification.json`).
+- Windows test log (local: `logs/windows_tests.log`),
+  Linux test log (local: `logs/linux_tests.log`), and
+  final-wheel QGIS test log (local: `logs/quality_qgis_final_070.log`).
+- Python 3.10 verification (local: `logs/quality_py310_verification.json`) and
+  strict Python 3.10 test log (local: `logs/quality_py310_pytest.log`).
+- Windows distribution checks (local: `logs/distribution_verification.log`) and
+  Linux distribution checks (local: `logs/linux_distribution_verification.log`).
 
 The audit logs and their generated sonar products are local evidence. They do
 not belong in the distributable wheel or plugin archive.
 
 ## Remaining software and publication checks
 
-1. **Create the public repository and configure publication accounts.** Maintainer
+1. **Verify public links and configure publication accounts.** Maintainer
    contact `diamondinyang@gmail.com` and GitHub handle `BezalelBenUri` are
-   configured. Package/plugin metadata point to the planned
-   `BezalelBenUri/seabed-sidescan` repository, which still needs to be created.
+   configured. Package/plugin metadata point to the public
+   `BezalelBenUri/seabed-sidescan` repository.
    Verify the public documentation and issue links, configure PyPI/TestPyPI
    Trusted Publishers and GitHub environments, and complete the OSGeo submission
    setup. A local public ZIP build does not verify external account ownership.
