@@ -1,0 +1,31 @@
+Seabed Sidescan
+
+The first-party Seabed Sidescan source code, including the Python analysis
+engine and QGIS interface, is licensed under the GNU General Public License,
+version 3 or (at your option) any later version (GPL-3.0-or-later).
+See LICENSE for the full license text. This selection does not change the
+licenses of third-party code, dependencies, survey data, or other materials.
+
+The optional raw sonar backend uses SidescanTools, developed by the
+SidescanTools team (GEOMAR and sonoware):
+https://github.com/sonoware/sidescantools
+
+SidescanTools retains its own GNU GPLv3 terms. The core Python wheel does not
+include that backend. The QGIS plugin includes a reviewed CLI-only source
+archive for guided setup, together with its unchanged LICENSE, upstream
+attribution and THIRD_PARTY.md modification notice. Vendor artwork and GUI
+resources are excluded. The project's GPL-3.0-or-later choice does not change
+the vendor's existing license grant.
+
+The canonical reviewed source is vendor/sidescantools-main. Its THIRD_PARTY.md
+records local modifications dated 2026-10-19. Original vendoring commit and
+earlier local modification dates are unknown. The upstream comparison commit
+f4d43bf27e7413e4490a0fb57300dc60d4694805 is a comparison reference, not proof
+of the original source commit. Preserve these notices when redistributing
+the reviewed source.
+
+The plugin also includes the first-party engine's source archive. It does not
+bundle Python, micromamba, GMT, GDAL, numerical-library binaries or an installed
+environment. Guided setup downloads its runtime and dependencies separately.
+Micromamba, GMT, GDAL, NumPy, Rasterio, SciPy, scikit-image, scikit-learn, pyshp,
+PyYAML and other downloaded dependencies retain their respective licenses.

@@ -1,0 +1,18 @@
+# Pip-only reference list for SidescanTools CLI dependencies.
+# Conda is still recommended on Windows because GDAL/GMT/Rasterio are easier there.
+
+pydantic
+geopy
+numpy==2.3.3
+pyproj
+pyshp
+PyYAML
+pygmt==0.17.0
+rioxarray==0.18.1
+rasterio==1.4.3
+scipy
+scikit-image
+pillow
+scikit-learn
+utm==0.7.0
+pyxtf==1.4.2

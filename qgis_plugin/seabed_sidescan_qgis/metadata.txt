@@ -1,0 +1,19 @@
+[general]
+name=Seabed Sidescan
+description=Side-scan processing, raster mosaics, texture features and acoustic facies through an isolated Python engine.
+about=Processing tools for georeferenced side-scan GeoTIFFs and raw sonar through a reviewed SidescanTools CLI backend. On 64-bit Windows, open Raster > Seabed Sidescan > Set up processing tools and click Install tools to download Python and processing dependencies into an isolated environment; select raw-sonar conversion to include GMT and the raw backend. Engine and raw-backend source are included; no separate Python installation or backend checkout is needed. Internet is required during setup; processing then uses installed tools and local input files. Fresh guided setup and all nine tools have passed on Windows QGIS 3.40.1, including a real XTF workflow under a Python network guard and closed proxies. Manual configuration remains available in advanced options. JSF is experimental. Other platforms and QGIS versions require separate validation.
+version=0.1.0
+qgisMinimumVersion=3.40.1
+qgisMaximumVersion=3.99
+author=BezalelBenUri
+email=diamondinyang@gmail.com
+homepage=https://github.com/BezalelBenUri/seabed-sidescan
+repository=https://github.com/BezalelBenUri/seabed-sidescan
+tracker=https://github.com/BezalelBenUri/seabed-sidescan/issues
+license=GPL-3.0-or-later
+category=Raster
+experimental=True
+deprecated=False
+hasProcessingProvider=yes
+icon=icon.svg
+tags=sonar,sidescan,seabed,raster,texture,classification

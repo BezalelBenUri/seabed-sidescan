@@ -1,0 +1,388 @@
+# Modified for Seabed Sidescan on 2026-10-19: safe output ownership,
+# explicit failures and per-input manifest. See ../../THIRD_PARTY.md.
+from pathlib import Path
+import argparse
+import json
+import numpy as np
+from sidescantools.sidescan_file import SidescanFile
+from sidescantools.sidescan_preproc import SidescanPreprocessor
+from sidescantools.georef_thread import Georeferencer
+from sidescantools.aux_functions import convert_to_dB, hist_equalization
+from timeit import default_timer as timer
+import os
+from sidescantools.egn_table_build import (
+    generate_egn_info,
+    generate_egn_table_from_infos,
+)
+from datetime import datetime
+from sidescantools.cfg_parser import CFG
+
+PLOTTING = False
+if PLOTTING:
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import ListedColormap
+
+
+class SidescanToolsMain:
+    filepath: Path
+    cfg_path: Path
+    sidescan_files_path: list
+    cfg: CFG
+    active_georef: bool
+
+    def __init__(self, file_path, cfg_path, no_georef):
+        self.filepath = Path(file_path)
+        self.cfg_path = Path(cfg_path)
+        self.active_georef = not no_georef
+        # Check input sidescan file path
+        if self.filepath.is_dir():
+            self.sidescan_files_path = sorted(
+                p for p in self.filepath.iterdir()
+                if p.is_file() and p.suffix.casefold() in {".xtf", ".jsf"}
+            )
+        elif self.filepath.is_file() and self.filepath.suffix.casefold() in {".xtf", ".jsf"}:
+            self.sidescan_files_path = [self.filepath]
+        else:
+            raise ValueError(
+                f"Argument path: {self.filepath} is not a valid directory or file."
+            )
+        if not self.sidescan_files_path:
+            raise ValueError(f"No XTF/JSF files found in {self.filepath}")
+        if len({p.stem.casefold() for p in self.sidescan_files_path}) != len(self.sidescan_files_path):
+            raise ValueError("Input file stems must be unique to prevent output collisions.")
+
+        # Read CFG
+        self.cfg = CFG()
+        if self.cfg_path.is_file() and self.cfg_path.suffix == ".yml":
+            self.cfg = CFG.load_cfg(self.cfg_path)
+        else:
+            raise ValueError(
+                f"CFG can't be found or is no valid yml file: {self.cfg_path}"
+            )
+
+        # summarize found files which will be processed
+        print(
+            f"SidescanTools found the following sonar files: {self.sidescan_files_path}"
+        )
+        print(
+            f"Processed PNGs will be written to: {self.cfg.meta_infos.working_dir}"
+        )
+        if self.active_georef:
+            print(
+                f"Georeferencing will be working in: {self.cfg.main_proc_params.georef_dir}"
+            )
+        else:
+            print("Georeferencing disabled")
+
+    def process(self):
+        manifest = {"schema_version": 1, "backend": "sidescantools", "inputs": []}
+        # Process files
+        for sidescan_path in self.sidescan_files_path:
+            record = {"path": str(sidescan_path.resolve()), "outputs": []}
+            start_timer_processing = timer()
+            sidescan_file = SidescanFile(filepath=sidescan_path)
+
+            preproc = SidescanPreprocessor(
+                sidescan_file=sidescan_file,
+                chunk_size=self.cfg.slant_gain_params.chunk_size,
+            )
+
+            # Refine altitude
+            # Therefore apply pie slice filter beforehand to remove artifacts
+            if self.cfg.main_proc_params.active_pie_slice_filter:
+                print(f"Pie slice filtering {sidescan_path}")
+                preproc.apply_pie_slice_filter()
+            search_radius = self.cfg.main_proc_params.btm_refinement_search_range
+            active_depth_refine = (
+                self.cfg.main_proc_params.active_bottom_line_refinement
+            )
+            active_single_altitude_offset = (
+                self.cfg.main_proc_params.active_btm_refinement_shift_by_offset
+            )
+            active_btm_smoothing = (
+                self.cfg.main_proc_params.active_bottom_line_smoothing
+            )
+            additional_inset = self.cfg.main_proc_params.additional_bottom_line_inset
+            use_intern_altitude = True
+            if active_depth_refine:
+                preproc.refine_detected_bottom_line(
+                    search_radius,
+                    active_single_altitude_offset=active_single_altitude_offset,
+                    active_bottom_smoothing=active_btm_smoothing,
+                    additional_inset=additional_inset,
+                )
+                use_intern_altitude = False
+
+            # --- Processing
+            print(f"Slant range correcting {sidescan_path}")
+            preproc.slant_range_correction(
+                nadir_angle=self.cfg.main_proc_params.nadir_angle,
+                use_intern_altitude=use_intern_altitude,
+            )
+
+            if not self.cfg.main_proc_params.active_gain_normalization:
+                pass
+            elif self.cfg.main_proc_params.gain_norm_strategy == 0:
+                print(f"Apply BAC to {sidescan_path}")
+                preproc.apply_beam_pattern_correction(
+                    angle_num=self.cfg.slant_gain_params.bac_resolution
+                )
+                preproc.apply_energy_normalization()
+            elif self.cfg.main_proc_params.gain_norm_strategy == 1:
+                print(f"Apply EGN to {sidescan_path}")
+                preproc.do_EGN_correction(self.cfg.main_proc_params.egn_table_path)
+            else:
+                strat_idx = self.cfg.main_proc_params.gain_norm_strategy
+                raise NotImplementedError(
+                    f"Gain normalization strategy {strat_idx} not implemented. Valid options are:\n 0: BAC\n 1: EGN"
+                )
+            preproc.egn_corrected_mat = np.hstack(
+                (
+                    np.fliplr(preproc.sonar_data_proc[0]),
+                    preproc.sonar_data_proc[1],
+                )
+            )
+
+            ping_len = int(np.shape(preproc.egn_corrected_mat)[1] / 2)
+            proc_data_0 = preproc.egn_corrected_mat[:, 0:ping_len]
+            proc_data_0 = np.nan_to_num(
+                proc_data_0
+            )  # remove nans from excluding far/nadir unknown values
+            proc_data_1 = preproc.egn_corrected_mat[:, ping_len:]
+            proc_data_1 = np.nan_to_num(proc_data_1)
+            # Convert data to dB
+            if self.cfg.main_proc_params.active_convert_dB:
+                proc_data_out_0 = convert_to_dB(proc_data_0)
+                proc_data_out_1 = convert_to_dB(proc_data_1)
+            else:
+                proc_data_out_0 = proc_data_0.copy()
+                proc_data_out_1 = proc_data_1.copy()
+            # Apply CLAHE
+            if self.cfg.main_proc_params.active_hist_equalization:
+                proc_data_out_0 = hist_equalization(proc_data_out_0)
+                proc_data_out_1 = hist_equalization(proc_data_out_1)
+
+            end_timer_processing = timer()
+
+            # --- Georeferencing
+            if self.active_georef:
+                start_timer_georef = timer()
+
+                # determine resolution if wanted
+                if self.cfg.georef_view_params.active_automatic_resolution:
+                    ground_range = sidescan_file.slant_range * np.sin(
+                        np.deg2rad(self.cfg.main_proc_params.vertical_beam_angle)
+                    )
+                    resolution = np.nanmax(ground_range) / sidescan_file.ping_len
+                    search_radius = np.max((0.1, 4 * resolution))
+                    self.cfg.georef_view_params.output_resolution = np.round(
+                        resolution, 3
+                    )
+                    self.cfg.georef_view_params.output_search_radius = np.round(
+                        search_radius, 3
+                    )
+
+                # start georeferencing
+                georeferencer = Georeferencer(
+                    filepath=sidescan_path,
+                    channel=0,
+                    active_utm=self.cfg.georef_view_params.active_utm,
+                    active_export_navdata=self.cfg.georef_view_params.active_export_navigation,
+                    active_blockmedian=self.cfg.georef_view_params.active_blockmedian,
+                    proc_data=proc_data_out_0,
+                    output_folder=self.cfg.main_proc_params.georef_dir,
+                    vertical_beam_angle=self.cfg.main_proc_params.vertical_beam_angle,
+                    resolution=self.cfg.georef_view_params.output_resolution,
+                    search_radius=self.cfg.georef_view_params.output_search_radius,
+                    cable_out=self.cfg.georef_view_params.cable_out,
+                    x_offset=self.cfg.georef_view_params.x_offset,
+                    y_offset=self.cfg.georef_view_params.y_offset,
+                )
+                output = georeferencer.process()
+                record["outputs"].append({"channel": 0,
+                    "input_channel": getattr(sidescan_file, "channel_indices", [0, 1])[0],
+                    "path": str(output.resolve())})
+                georeferencer = Georeferencer(
+                    filepath=sidescan_path,
+                    channel=1,
+                    active_utm=self.cfg.georef_view_params.active_utm,
+                    active_export_navdata=self.cfg.georef_view_params.active_export_navigation,
+                    active_blockmedian=self.cfg.georef_view_params.active_blockmedian,
+                    proc_data=proc_data_out_1,
+                    output_folder=self.cfg.main_proc_params.georef_dir,
+                    vertical_beam_angle=self.cfg.main_proc_params.vertical_beam_angle,
+                    resolution=self.cfg.georef_view_params.output_resolution,
+                    search_radius=self.cfg.georef_view_params.output_search_radius,
+                    cable_out=self.cfg.georef_view_params.cable_out,
+                    x_offset=self.cfg.georef_view_params.x_offset,
+                    y_offset=self.cfg.georef_view_params.y_offset,
+                )
+                output = georeferencer.process()
+                record["outputs"].append({"channel": 1,
+                    "input_channel": getattr(sidescan_file, "channel_indices", [0, 1])[1],
+                    "path": str(output.resolve())})
+
+                end_timer_georef = timer()
+
+            # Also write processed data as png for comparison
+            proc_data_out_0 /= np.max(np.abs(proc_data_out_0))
+            proc_data_out_0 *= 255
+            proc_data_out_1 /= np.max(np.abs(proc_data_out_1))
+            proc_data_out_1 *= 255
+            img_data = np.hstack((proc_data_out_0, proc_data_out_1))
+            preview_dir = Path(self.cfg.meta_infos.working_dir)
+            preview_dir.mkdir(parents=True, exist_ok=True)
+            Georeferencer.write_img(
+                preview_dir / (sidescan_path.stem + "_processed.png"),
+                img_data.astype(np.uint8),
+            )
+            record["preview"] = str((preview_dir / (sidescan_path.stem + "_processed.png")).resolve())
+            manifest["inputs"].append(record)
+
+            # Plotting to find errors and test bottom line strategy
+            btm_line_mat_port = np.zeros_like(sidescan_file.data[0])
+            btm_line_mat_star = np.zeros_like(sidescan_file.data[0])
+            if active_depth_refine:
+                btm_line_mat_port_intern = np.zeros_like(sidescan_file.data[0])
+                btm_line_mat_star_intern = np.zeros_like(sidescan_file.data[0])
+            for line_idx in range(len(preproc.portside_bottom_dist.astype(int))):
+                btm_line_mat_port[
+                    line_idx, preproc.portside_bottom_dist.astype(int)[line_idx]
+                ] = 1
+                btm_line_mat_star[
+                    line_idx, preproc.starboard_bottom_dist.astype(int)[line_idx]
+                ] = 1
+                if active_depth_refine:
+                    btm_line_mat_port_intern[
+                        line_idx, preproc.intern_altitude_port.astype(int)[line_idx]
+                    ] = 1
+                    btm_line_mat_star_intern[
+                        line_idx, preproc.intern_altitude_star.astype(int)[line_idx]
+                    ] = 1
+
+            print(f"Processing took {end_timer_processing - start_timer_processing} s")
+            if self.active_georef:
+                print(f"Georef took {end_timer_georef - start_timer_georef} s")
+
+            if PLOTTING:
+                overlay_cmap = ListedColormap(["none", "red"])
+                overlay_cmap_2 = ListedColormap(["none", "green"])
+
+                plt.figure()
+                plt.imshow(20 * np.log10(sidescan_file.data[0]))
+                plt.imshow(btm_line_mat_port, cmap=overlay_cmap)
+                if active_depth_refine:
+                    plt.imshow(btm_line_mat_port_intern, cmap=overlay_cmap_2)
+
+                plt.figure()
+                plt.imshow(20 * np.log10(sidescan_file.data[1]))
+                plt.imshow(btm_line_mat_star, cmap=overlay_cmap)
+                if active_depth_refine:
+                    plt.imshow(btm_line_mat_star_intern, cmap=overlay_cmap_2)
+
+                if self.cfg.main_proc_params.active_pie_slice_filter:
+                    plt.figure()
+                    plt.imshow(20 * np.log10(preproc.dat_pie_slice_copy[0]))
+                    plt.imshow(btm_line_mat_port, cmap=overlay_cmap)
+                    if active_depth_refine:
+                        plt.imshow(btm_line_mat_port_intern, cmap=overlay_cmap_2)
+
+                    plt.figure()
+                    plt.imshow(20 * np.log10(preproc.dat_pie_slice_copy[1]))
+                    plt.imshow(btm_line_mat_star, cmap=overlay_cmap)
+                    if active_depth_refine:
+                        plt.imshow(btm_line_mat_star_intern, cmap=overlay_cmap_2)
+
+                plt.figure()
+                plt.imshow(img_data)
+
+                plt.show(block=True)
+
+        manifest_path = os.environ.get("SIDESCANTOOLS_RUN_MANIFEST")
+        if manifest_path:
+            destination = Path(manifest_path)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            staging = destination.with_suffix(destination.suffix + ".tmp")
+            staging.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+            staging.replace(destination)
+        return manifest
+
+    def gen_egn_table(self):
+
+        egn_infos = []
+        time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        egn_table_path = Path(self.sidescan_files_path[0]).parent / (
+            "egn_table_" + time_str + ".npz"
+        )
+        print("-----------------------------------")
+        print("Generating EGN Table")
+        print(f"Result will be written to: {egn_table_path}")
+        print("-----------------------------------")
+
+        for sidescan_path in self.sidescan_files_path:
+            sonar_file_path = Path(sidescan_path)
+            bottom_path = sonar_file_path.parent / (
+                sonar_file_path.stem + "_bottom_info.npz"
+            )
+            out_path = sonar_file_path.parent / (sonar_file_path.stem + "_egn_info.npz")
+            active_btm_detection_downsampling = False
+            if self.cfg.bottomline_params.downsampling_factor > 1:
+                active_btm_detection_downsampling = True
+            generate_egn_info(
+                filename=sidescan_path,
+                bottom_file=bottom_path,
+                out_path=out_path,
+                chunk_size=self.cfg.slant_gain_params.chunk_size,
+                nadir_angle=self.cfg.main_proc_params.nadir_angle,
+                active_intern_depth=self.cfg.slant_gain_params.active_intern_depth,
+                active_bottom_detection_downsampling=active_btm_detection_downsampling,
+                egn_table_parameters=[
+                    self.cfg.slant_gain_params.egn_table_resolution_angle,
+                    self.cfg.slant_gain_params.egn_table_resolution_range_factor,
+                ],
+            )
+            egn_infos.append(out_path)
+
+        # generate final EGN Table
+        generate_egn_table_from_infos(egn_infos, egn_table_path)
+
+        # clean up
+        for egn_info in egn_infos:
+            os.remove(egn_info)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Tool to process sidescan sonar data")
+    parser.add_argument("-w", "--write_cfg", action="store_true")
+    parser.add_argument(
+        "filepath",
+        metavar="FILE",
+        help="Path to xtf/jsf file or dir containing multiple files",
+    )
+    parser.add_argument(
+        "cfg",
+        nargs="?",
+        metavar="FILE",
+        help="Path to cfg",
+        default="./sidescan_out/project_info.yml",
+    )
+    parser.add_argument("-g", "--gen_egn", action="store_true")
+    parser.add_argument("-n", "--no_georef", action="store_true")
+
+    args = parser.parse_args()
+    print("args:", args)
+
+    if args.write_cfg:
+        cfg = CFG()
+        dst_path = Path(args.filepath)
+        cfg.save_cfg_and_schema(dst_path)
+    else:
+        sidescantools = SidescanToolsMain(args.filepath, args.cfg, args.no_georef)
+        if args.gen_egn:
+            sidescantools.gen_egn_table()
+        else:
+            sidescantools.process()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,30 @@
+# Solver specification for guided setup, not a platform-specific lock file.
+# Raw-reader/GMT versions follow the reviewed real-XTF processing environment.
+# All native and Python dependencies come from one channel; local source
+# bundles are installed afterwards with --no-deps --no-build-isolation.
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.12
+  - pip
+  - setuptools>=77
+  - wheel
+  - affine=2.4
+  - numpy=2.3.3
+  - pyshp>=2.3
+  - rasterio=1.4.3
+  - scipy>=1.10,<2
+  - scikit-image>=0.21,<0.27
+  - scikit-learn>=1.3,<2
+  - pyyaml>=6,<7
+  - gdal=3.10.3
+  - gmt>=6.5,<7
+  - pygmt=0.17.0
+  - rioxarray=0.18.1
+  - pyproj>=3.6,<4
+  - pydantic>=2,<3
+  - geopy>=2.4,<3
+  - pillow>=10,<13
+  - pyxtf=1.4.2
+  - utm=0.7.0

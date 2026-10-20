@@ -1,0 +1,43 @@
+# Raw survey data and heavy generated outputs should not be committed.
+*.xtf
+*.jsf
+*.seg
+*.all
+*.kmall
+*.s7k
+*.tif
+*.tiff
+*.vrt
+*.png
+*.jpg
+*.jpeg
+!vendor/sidescantools-main/src/sidescantools/res/*.png
+*.csv
+*.npz
+*.npy
+
+# Local working folders: keep the folders, ignore their contents.
+data/*
+outputs/*
+logs/*
+!data/.gitkeep
+!outputs/.gitkeep
+!logs/.gitkeep
+temp/
+__pycache__/
+*.egg-info/
+.DS_Store
+.venv/
+.venv-*/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+*.whl
+*.tar.gz
+*.zip
+.env
+
+# Office temporary files
+~$*

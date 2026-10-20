@@ -1,0 +1,51 @@
+name: Build development distributions
+
+# Produces reviewable artifacts only. Public release metadata and licensing
+# must be completed separately before submitting to PyPI or the QGIS directory.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install package and build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Run tests
+        run: python -m pytest -W error
+      - name: Check maintained source and tests
+        run: python -m ruff check src tests qgis_plugin tools
+      - name: Build wheel and source distribution
+        run: |
+          python tools/build_setup_resources.py
+          python -m build
+      - name: Check distribution metadata
+        run: python -m twine check --strict dist/*.whl dist/*.tar.gz
+      - name: Build development QGIS plugin
+        run: python tools/build_qgis_plugin.py --development
+      - name: Verify distribution artifacts
+        run: python tools/verify_distributions.py --dist-dir dist
+      - name: Retain development artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: seabed-sidescan-development-${{ github.sha }}
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+            dist/*-development.zip
+          if-no-files-found: error
+          retention-days: 14

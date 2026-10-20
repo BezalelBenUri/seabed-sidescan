@@ -1,0 +1,69 @@
+{
+  "bundles": {
+    "engine": {
+      "filename": "engine-source.zip",
+      "files": {
+        "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "NOTICE": "91a4647edaddad2bb6136b0c4c8a0608339488a74837e2b8c3b26f8d9229f9c5",
+        "README.md": "ce02f7ab5b8b1c260c3171973d33d7c193ddf7daa51c9ff6e07134f7b5db6595",
+        "pyproject.toml": "2d9684a06007ffa8f0a69710404326b3d24bb9ab14926954a1e5070ffa577ea8",
+        "src/seabed_sidescan/__init__.py": "93b1a2b0a3d01a807eafa01e69f100a3200cfdf98c9bea62e877fbc2c096897a",
+        "src/seabed_sidescan/__main__.py": "808fbf0b0270e7c16ce73181af5714ee8ef0af78018b5641a931eaa6a1edb2b4",
+        "src/seabed_sidescan/api.py": "f603fde6b2d9a4f422b8a258221be5029c23514bbe419be80646b5a349b3da21",
+        "src/seabed_sidescan/classify.py": "62aa839d9c394a2a1e7a03f990a90c6cc77cc3de0017c3cb792314d7ece942f0",
+        "src/seabed_sidescan/cleanup.py": "2b060b11c4edf6f6b54bf74aa701505dcbefd087b747da63c910463aad18cd65",
+        "src/seabed_sidescan/cli.py": "510e20078032ca26f6b406d70840decaad10a4916a9ffc7bbcf675d0e14deacc",
+        "src/seabed_sidescan/clip.py": "96f346def6512890a2301904ea1a6823627a098d0460ae753f8f85b1d16b1cc8",
+        "src/seabed_sidescan/evaluate.py": "1db81f5b6cd20b1fa07f38ae0aadb15f44dbd184b780180cf95a867b4aa8092f",
+        "src/seabed_sidescan/features.py": "b2c1310f983197e50f9b5e689a703bd9e67fc15cc1c24f29dcbdb1d810c0e1d9",
+        "src/seabed_sidescan/io.py": "25e8a94622b202ec25b0979596e7f6d1a9d13756a045d43e787449056929b05b",
+        "src/seabed_sidescan/mask.py": "64ff1981465129219a1d0a43566d1bf5936d16889a0701c7bfb1ee5b43b01217",
+        "src/seabed_sidescan/mosaic.py": "f7e036b571a7186fcc1dce2e385870abfeafa3a12825dfbd21a750cdb5f76838",
+        "src/seabed_sidescan/paths.py": "d66ebd0841be3ba5c6ea3b72372151799f8024f78b7d43b8d72a77cbac0f4be3",
+        "src/seabed_sidescan/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "src/seabed_sidescan/resources/__init__.py": "622f6368be0b266eb6dc5ffd27a732f7625fceb7126155995a377a9e71fb7991",
+        "src/seabed_sidescan/resources/sidescantools_project_info.yml": "8eb3775d8d11ae21e861ba1c228723eb41e35823a4b39b9ad4852bac357a6f2f",
+        "src/seabed_sidescan/texture.py": "a2a0bd3bb52eb16a367687a26b6d72f1ac256b3b6818d5a0908acf774390e5d2"
+      },
+      "root": "engine-source",
+      "sha256": "39c16075418b2e75ac50a7f89370757e639b8c4260f9b833eed6a75a55b4417e"
+    },
+    "raw": {
+      "filename": "sidescantools-cli-source.zip",
+      "files": {
+        "BUNDLE_README.md": "c3b31ebea75fa2b24ac109f2b54f201a2351c073577ab0d5cd8aa96e132a6203",
+        "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "README.md": "22657206f7760c3c6cdfc2c203cb4928599d396a4599dc7e45ef86353f54b7e5",
+        "THIRD_PARTY.md": "0ab5d8147c0af9d0f072049e957f583c6d77c72fbd604e5977cca092768962f7",
+        "environment_cli.yml": "40ed38d69c64b8980ba207da2ebf20da1092e1d06e6cb7325fe36d2548da482f",
+        "pyproject.toml": "23e2dc0d96405a60d06b74dd10cd1ae03072d0ba2c3bcd498b6814a1f957fabc",
+        "sidescan_out/project_info.yml": "ec629f2449e3e79b9841ed434df08d760c8af346b110def352870f6fe3ec9bf3",
+        "sidescan_out/project_info_schema.json": "5a8cd545019ef630fe85f50b5a780c22645d0f54adb032ab08d06075a586936a",
+        "src/sidescantools/__init__.py": "45296d43eaaf07fb57db6818fd949038db250f67079981905d3ad88c58c2a7dc",
+        "src/sidescantools/aux_functions.py": "713d11e222a092d0a2a9fc960bdfe9f62c453d1c286780d674f452e235d5a9a2",
+        "src/sidescantools/cfg_parser.py": "f8335eeaf78189a3b3d0038ebe2177f3b6c2177c9b4e428412cda49de47c8751",
+        "src/sidescantools/egn_table_build.py": "ccdfe0b6dd952beb6af532bd330042c0e2534707aed0f17e0b1e0094d244cb6c",
+        "src/sidescantools/georef_thread.py": "20a113f72bd1c2aecabb79fc694c26c50b9717f0ba1d726ceb15fdb4d7a06224",
+        "src/sidescantools/jsf.py": "206a282a47b43d319d7401f50cac84ed1ef5d97de93b0cbb331eef866499fc45",
+        "src/sidescantools/main_cli.py": "461a7f7b5f533a9204b0398e4c317186e940c203d5e982a612cd9e40e847478d",
+        "src/sidescantools/sidescan_file.py": "58e11e2b3024eda64690c6cfc84dd7929b108ce33cbf95e35fc8c844ebc120e3",
+        "src/sidescantools/sidescan_preproc.py": "ccd7e86d5c6f4097c89228b4b74454658b8d5abc3ad86c4176f99264b49285d1",
+        "src/sidescantools/xtf_wrapper.py": "03d9ba835a607a09c63493f36e9c6d95cebe75505c267d32ec36dedc9fdb9893"
+      },
+      "root": "sidescantools-cli-source",
+      "sha256": "55f4bffe4d58e2d063b1d2e680748aeb871d04054a8041a12767e92ec5808ef6"
+    }
+  },
+  "engine_version": "0.1.0",
+  "environments": {
+    "core": {
+      "filename": "environment-core.yml",
+      "sha256": "7d3a1092837f4ea2f0134e6fcbcc09a170382c9e1040d9b21880ba9e38605a6b"
+    },
+    "raw": {
+      "filename": "environment-raw.yml",
+      "sha256": "ed54aea06f56e4622e9b29f2a0cd59ea4923170b5338b3c0900b7eea5add13bc"
+    }
+  },
+  "schema_version": 1
+}

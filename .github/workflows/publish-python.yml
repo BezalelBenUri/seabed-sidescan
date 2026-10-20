@@ -1,0 +1,139 @@
+name: Publish Python distributions manually
+
+# Configure matching Trusted Publishers and protected GitHub environments named
+# testpypi and pypi before running this workflow. Rehearse on TestPyPI first.
+# A production run rebuilds and verifies the selected commit; it does not
+# automatically promote the bytes from an earlier TestPyPI run.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Package index to publish to
+        required: true
+        type: choice
+        default: testpypi
+        options:
+          - testpypi
+          - pypi
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Verify the public source repository
+        env:
+          RELEASE_REPOSITORY: ${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import tomllib
+          import urllib.request
+          from pathlib import Path
+
+          project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
+          repository = os.environ["RELEASE_REPOSITORY"]
+          expected = "https://github.com/" + repository
+          assert project["urls"]["Repository"].casefold() == expected.casefold(), "Release source URL must match this repository."
+          request = urllib.request.Request("https://api.github.com/repos/" + repository,
+                                           headers={"User-Agent": "seabed-sidescan-release-check"})
+          with urllib.request.urlopen(request, timeout=30) as response:
+              information = json.load(response)
+          assert information.get("private") is False, "The source repository must be public."
+          assert information.get("has_issues") is True, "Enable the advertised issue tracker."
+          documentation = urllib.request.Request(project["urls"]["Documentation"],
+                                                  headers={"User-Agent": "seabed-sidescan-release-check"})
+          with urllib.request.urlopen(documentation, timeout=30) as response:
+              assert response.status == 200, "The advertised documentation must be readable."
+          print("Public repository, issue tracker and documentation are available.")
+          PY
+      - name: Install package and build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Run tests
+        run: python -m pytest -W error
+      - name: Check maintained source and tests
+        run: python -m ruff check src tests qgis_plugin tools
+      - name: Build wheel and source distribution
+        run: |
+          python tools/build_setup_resources.py
+          python -m build
+      - name: Check distribution metadata
+        run: python -m twine check --strict dist/*.whl dist/*.tar.gz
+      - name: Build development QGIS plugin for distribution verification
+        run: python tools/build_qgis_plugin.py --development
+      - name: Require complete public release metadata and build QGIS ZIP
+        run: python tools/build_qgis_plugin.py
+      - name: Verify distributions, both plugin ZIPs and source rebuilds
+        run: python tools/verify_distributions.py --dist-dir dist
+      - name: Record Python distribution checksums
+        run: sha256sum dist/*.whl dist/*.tar.gz | tee python-distributions.SHA256SUMS
+      - name: Retain Python distributions
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: python-distributions
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+      - name: Retain Python distribution checksums separately
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: python-distribution-checksums
+          path: python-distributions.SHA256SUMS
+          if-no-files-found: error
+          retention-days: 30
+      - name: Retain QGIS ZIP for separate manual submission
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qgis-plugin
+          path: |
+            dist/seabed_sidescan_qgis-*.zip
+            !dist/*-development.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: ${{ inputs.target }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Retrieve verified Python distributions
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: python-distributions
+          path: dist
+      - name: Publish to TestPyPI through Trusted Publishing
+        if: inputs.target == 'testpypi'
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist/
+          skip-existing: 'false'
+      - name: Publish to PyPI through Trusted Publishing
+        if: inputs.target == 'pypi'
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          repository-url: https://upload.pypi.org/legacy/
+          packages-dir: dist/
+          skip-existing: 'false'

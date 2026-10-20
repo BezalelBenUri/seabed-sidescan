@@ -1,0 +1,17 @@
+include README.md pyproject.toml
+include CHANGELOG.md
+include LICENSE NOTICE
+recursive-include src/seabed_sidescan *.py *.typed *.yml
+recursive-include tests *.py
+recursive-include docs *.md
+recursive-include qgis_plugin *.py *.txt *.md *.svg LICENSE
+recursive-include qgis_plugin/seabed_sidescan_qgis/resources/setup *.zip *.json *.yml
+include requirements/managed_core_environment.yml requirements/managed_raw_environment.yml
+include tools/build_qgis_plugin.py
+include tools/build_setup_resources.py
+include tools/verify_distributions.py
+prune vendor
+prune data
+prune outputs
+prune logs
+global-exclude __pycache__ *.py[cod]

@@ -1,0 +1,21 @@
+name: env_sidescantools
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.12
+  - conda-forge::pydantic
+  - geopy
+  - numpy==2.3.3
+  - conda-forge::napari
+  - conda-forge::pyqt=5.*
+  - conda-forge::gdal==3.10.3
+  - pyyaml
+  - qtpy
+  - pyproj
+  - pygmt==0.17.0
+  - rioxarray==0.18.1
+  - rasterio==1.4.3
+  - pyqtgraph
+  - conda-forge::utm==0.7.0
+  - conda-forge::pyxtf==1.4.2
