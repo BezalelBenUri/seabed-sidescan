@@ -396,7 +396,22 @@ def test_no_db_no_gain_manifest_and_unrelated_outputs(tmp_path, monkeypatch):
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell patch installation is Windows-specific")
-def test_backend_patch_materialization_is_reproducible_and_idempotent(tmp_path):
+@pytest.mark.parametrize("inherited_module_path", [False, True], ids=["default", "powershell-7-modules"])
+def test_backend_patch_materialization_is_reproducible_and_idempotent(
+    tmp_path, monkeypatch, inherited_module_path,
+):
+    if inherited_module_path:
+        module = tmp_path / "modules/Microsoft.PowerShell.Management"
+        module.mkdir(parents=True)
+        (module / "Microsoft.PowerShell.Management.psd1").write_text(
+            "@{ ModuleVersion = '7.0.0'; RootModule = 'incompatible.psm1'; "
+            "FunctionsToExport = @('Split-Path') }",
+            encoding="utf8",
+        )
+        (module / "incompatible.psm1").write_text(
+            "throw 'This module requires PowerShell 7.'", encoding="utf8",
+        )
+        monkeypatch.setenv("PSModulePath", str(module.parent))
     source = BACKEND.parents[1]
     target = tmp_path / "checkout"
     shutil.copytree(source, target)
@@ -406,7 +421,14 @@ def test_backend_patch_materialization_is_reproducible_and_idempotent(tmp_path):
     script = source.parents[1] / "scripts/patch_sidescantools_klein_cli.ps1"
     command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
                "-SidescanToolsRepo", str(target)]
+    # A PowerShell 7 -> Python -> Windows PowerShell launch inherits incompatible
+    # module paths. Let Windows PowerShell construct its own module search path.
+    child_env = {key: value for key, value in os.environ.items() if key.upper() != "PSMODULEPATH"}
     for _ in range(2):
-        subprocess.run(command, check=True, capture_output=True, text=True)
+        result = subprocess.run(command, capture_output=True, text=True, env=child_env)
+        assert result.returncode == 0, (
+            f"PowerShell patch failed (exit {result.returncode}).\n"
+            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        )
         for name in ("xtf_wrapper.py", "jsf.py", "sidescan_file.py"):
             assert (target / "src/sidescantools" / name).read_bytes() == (BACKEND / name).read_bytes()
